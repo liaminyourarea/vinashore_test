@@ -64,6 +64,7 @@
             color: white;
         }
     </style>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 </head>
 <body>
 
@@ -87,13 +88,42 @@
         <th>Delete</th>
     </tr>
     {% for user in users %}
-        <tr>
+        <tr id="data-id-{{ user.id }}">
             <td>{{ user.data }}</td>
-            <td><a href="/user?action=delete&id={{ user.id }}">Delete</a></td>
+            <td><a class="remove-item" data-id="{{ user.id }}" href="#">Delete</a></td>
         </tr>
     {% endfor %}
 </table>
 
+<script>
+    $(document).ready(function(){
+        $(".remove-item").click(function(e){
+            e.preventDefault();
+            if (confirm("Are you sure to delete it?")) {
+                let id = $(this).attr('data-id');
+                let url = '/user/delete/'+id;
+                
+                $.ajax({
+                    url: url,
+                    dataType: 'json',
+                    method: 'POST',
+                    success: function (res) {
+                        $('#data-id-' + res.id).remove();
+                    },
+                    error: function (XHR, status, error) {
+                        console.log(XHR);
+                        console.log(status);
+                        console.log(error);
+                    }
+                })
+            }
+        });
+    });
+
+    if ( window.history.replaceState ) {
+        window.history.replaceState( null, null, window.location.href );
+    }
+</script>
 </body>
 </html>
 

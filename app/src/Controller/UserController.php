@@ -5,6 +5,7 @@ namespace App\Controller;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use App\Entity\User;
@@ -21,32 +22,33 @@ class UserController extends AbstractController
         self::createDbIfNotExist();
     }
 
-    #[Route('/user', methods: ['GET'])]
+    #[Route('/user', methods: ['GET', 'POST'])]
     public function index(Request $request)
     {
-        $action = $request->get("action");
-        if ($action == "delete") {
-            $id = $request->get("id");
-            $user = $this->entityManager->getReference(User::class, $id);
-            $this->entityManager->remove($user);
+        if ($request->getMethod() == 'POST') {
+            $firstname = $request->get("firstname");
+            $lastname = $request->get("lastname");
+            $address = $request->get("address");
+            $item = new User();
+            $item->setData($firstname . " - " . $lastname . " - " . $address);
+            $this->entityManager->persist($item);
             $this->entityManager->flush();
         }
 
         return self::renderTemplate();
     }
-
-    #[Route('/user', methods: ['POST'])]
-    public function create(Request $request)
+    #[Route('/user/delete/{id}', methods: ['POST'])]
+    public function deleteItem(Request $request, User $user)
     {
-        $firstname = $request->get("firstname");
-        $lastname = $request->get("lastname");
-        $address = $request->get("address");
-        $item = new User();
-        $item->setData($firstname . " - " . $lastname . " - " . $address);
-        $this->entityManager->persist($item);
+        $id = $user->getId();
+        $user = $this->entityManager->getReference(User::class, $id);
+        $this->entityManager->remove($user);
         $this->entityManager->flush();
 
-        return self::renderTemplate();
+        return new JsonResponse([
+            'success' => true,
+            'id' => $id
+        ]);
     }
 
     private function renderTemplate()
